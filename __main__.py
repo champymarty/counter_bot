@@ -59,16 +59,17 @@ async def on_message(message: discord.Message):
         await new_mimu_house_command(message)
         
 async def leaderboard_claim_point(message: discord.Message):
-    print(message.embeds[0].title)
+    global points_to_claim
+    text = build_text(message)
+    print(text)
     try:
-        if points_to_claim is not None and "𝐂𝐥𝐚𝐢𝐦𝐞𝐝 𝐏𝐨𝐢𝐧𝐭!" in message.embeds[0].title:
-            add_points_leaderboard(message.embeds[0].description)
-            points_to_claim = None
-            emoji = '\N{THUMBS UP SIGN}'
-            await message.add_reaction(emoji)
-        elif points_to_claim is None and "𝐑𝐚𝐧𝐝𝐨𝐦 𝐏𝐨𝐢𝐧𝐭 𝐃𝐫𝐨𝐩" in message.embeds[0].title:
+        if points_to_claim is not None and "𝐂𝐥𝐚𝐢𝐦𝐞𝐝 𝐏𝐨𝐢𝐧𝐭!" in text:
+            if add_points_leaderboard(text):
+                emoji = '\N{THUMBS UP SIGN}'
+                await message.add_reaction(emoji)
+        elif points_to_claim is None and "𝐑𝐚𝐧𝐝𝐨𝐦 𝐏𝐨𝐢𝐧𝐭 𝐃𝐫𝐨𝐩" in text:
             for role, points in role_to_points.items():
-                if role in message.embeds[0].description:
+                if role in text:
                     points_to_claim = points
                     break
             emoji = '\N{THUMBS UP SIGN}'
@@ -101,6 +102,19 @@ async def new_mimu_house_command(message: discord.Message):
             await message.add_reaction(emoji)
     except TypeError:
         pass
+    
+def build_text(message: discord.Message):
+    text = ""
+    text += message.content
+    try:
+        for embed in message.embeds:
+            text += embed.description
+            for field in embed.fields:
+                text +=  field.name
+                text +=  field.value
+    except TypeError:
+        pass
+    return text
         
 def add_points_leaderboard(text: str):
     house = text.strip().split("**")[1]
@@ -108,7 +122,9 @@ def add_points_leaderboard(text: str):
         if houseInfo["house"].lower() == house.lower():
             houseInfo["score"] += points_to_claim
             write_houses()
-            return
+            points_to_claim = None
+            return True
+    return False
         
 def add_points(text: str, info):
     for key, points in role_to_points.items():
