@@ -117,6 +117,7 @@ def build_text(message: discord.Message):
     return text
         
 def add_points_leaderboard(text: str):
+    global points_to_claim
     house = text.strip().split("**")[1]
     for houseInfo in channels_to_house.values():
         if houseInfo["house"].lower() == house.lower():
